@@ -169,7 +169,9 @@ class AnalysisService:
         self.require_delivery_day(day)
         tz = self._settings.timezone
         cutoff_utc = decision_cutoff_utc(day, cutoff, tz)
+        earliest = decision_cutoff_utc(day, time(0, 0), tz) - timedelta(days=1)
         frame = forecast_vintages(self._dataset.forecasts, day, tz)
+        frame = frame[frame["publishTime"] >= earliest]
         actuals = self.actuals_hourly[local_dates(self.actuals_hourly["startTime"], tz) == day]
         return VintagesOut(
             delivery_day=day,

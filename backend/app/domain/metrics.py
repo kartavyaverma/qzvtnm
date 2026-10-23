@@ -112,7 +112,9 @@ def uncertainty_band(
         target["low"] = np.nan
         target["high"] = np.nan
         return target, history_days
-    low_q, high_q = history["error"].quantile(list(quantiles))
-    target["low"] = (target["forecast"] - high_q).clip(lower=0)
-    target["high"] = (target["forecast"] - low_q).clip(lower=0)
+    usable = history[history["forecast"] > 0]
+    ratios = usable["actual"] / usable["forecast"]
+    low_ratio, high_ratio = ratios.quantile(list(quantiles))
+    target["low"] = (target["forecast"] * low_ratio).clip(lower=0)
+    target["high"] = (target["forecast"] * high_ratio).clip(lower=0)
     return target, history_days

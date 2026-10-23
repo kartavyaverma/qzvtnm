@@ -78,3 +78,14 @@ def test_band_never_goes_below_zero() -> None:
     frame = joined_frame({target - timedelta(days=d): [5000.0] for d in (2, 3)} | {target: [0.0]})
     band, _ = metrics.uncertainty_band(frame, target, min_history_days=2)
     assert band["low"].iloc[0] == 0
+
+
+def test_band_scales_with_forecast_level() -> None:
+    target = date(2026, 1, 10)
+    history = joined_frame({target - timedelta(days=d): [100.0] for d in (2, 3)})
+    small = joined_frame({target: [0.0]}, forecast=500.0)
+    large = joined_frame({target: [0.0]}, forecast=5000.0)
+    low_small = metrics.uncertainty_band(pd.concat([history, small]), target, 2)[0]["low"].iloc[0]
+    low_large = metrics.uncertainty_band(pd.concat([history, large]), target, 2)[0]["low"].iloc[0]
+    assert low_small == pytest.approx(450.0)
+    assert low_large == pytest.approx(4500.0)
