@@ -31,6 +31,47 @@ The buying decision for delivery day **D** is made on **D-1**, before the auctio
 - The bias persists even for forecasts made 0–6 hours ahead, which points to a systematic difference between the forecast and metered output (for example curtailment) rather than weather uncertainty alone.
 - Elexon publishes at 02:30, 04:30, 07:30, 09:30, 11:30, 15:30, 18:30 and 22:30 UTC. With a 09:20 gate closure the 09:30 forecast arrives ten minutes too late, so the 07:30 run is the one that drives decisions.
 
+## How the dashboard answers the brief
+
+### Requirement 1: understand the latest forecast available at decision time
+
+| Element | Why it is there |
+|---|---|
+| Cutoff picker (EPEX 09:20, N2EX 09:50, EPEX 15:30, custom) | "Latest forecast available when deciding" depends on when the decision is made. Gate closure differs by auction, so the cutoff is an input rather than a hard-coded assumption. |
+| Day stepper with arrow keys | Buyers review one delivery day at a time; stepping through days is the natural way to audit a month of decisions. |
+| Decision callout | States the decision in plain words: delivery day, decision time, which publication was used and how far ahead it looked. Removes any doubt about which forecast is shown. |
+| Forecast line with likely range | The forecast alone hides its uncertainty. The P10–P90 band shows the realistic spread, built only from information available at the cutoff. |
+| Energy cards: forecast, prudent plan (P10), actual | Purchases are made in energy, not in instantaneous MW. The prudent plan converts the uncertainty into a volume the team can act on. |
+| "Show actual generation" toggle | Lets the user first see exactly what the buyer saw, then reveal the outcome. Keeps decision-time information and hindsight clearly separate. |
+| Forecast evolution chart | Shows every publication covering the day, marking which arrived before the cutoff and which arrived too late. Answers "would waiting have helped?" for a single day. |
+
+### Requirement 2: evaluate forecast accuracy quantitatively
+
+| Element | Why it is there |
+|---|---|
+| MAE and normalised MAE | Typical size of a miss, in GW and as a share of output, so it is easy to compare with portfolio size. |
+| RMSE | Penalises large misses, which are the expensive ones for a buyer. |
+| Bias and over-forecast share | Direction of the error. A buyer cares whether the forecast is systematically high (shortfall risk) or low (surplus), not only how big the error is. |
+| P90 shortfall buffer | Turns the error distribution into a planning number: how much below the forecast to plan to be covered in 9 of 10 hours. |
+| Error histogram | Shows the shape and skew of errors; colour separates shortfall from surplus. |
+| Error by delivery day | Identifies the days where the forecast failed badly, for follow-up. |
+| Error by hour of day | Shows which parts of the day need a larger buffer. |
+| Cutoff comparison table | Quantifies whether buying at a later auction would reduce error. |
+| Lead-time view | Shows how error grows with the time between publication and delivery, with the buyer's actual decision window highlighted. |
+
+### Design decisions and trade-offs
+
+| Decision | Alternative considered | Reason |
+|---|---|---|
+| Select the latest forecast per target hour, each with its own cutoff | One cutoff per calendar day applied to a block | Hours near midnight belong to different delivery days and so different cutoffs. Per-hour selection is always correct. |
+| Delivery window 2 Jan – 1 Feb | Delivery days in January | The brief scopes *decisions* made in January. A decision on D-1 covers delivery on D. |
+| Average two half-hours into an hourly actual | Compare only the :00 half-hour | Day-ahead hourly products cover the full hour, so the hourly mean is the matching quantity. Incomplete hours are dropped, not guessed. |
+| Range from actual/forecast ratios | Fixed MW error quantiles | Error grows with wind level. A fixed band was too wide on calm days and too narrow on windy days. |
+| Range from days up to D-2 only | All days in the month | Using later days would leak information the buyer did not have. A test enforces this. |
+| nMAE instead of MAPE | MAPE | MAPE is unstable when actual output is near zero. |
+| CSV snapshot of Elexon data | Live API calls per request | Deterministic, fast demo that does not depend on Elexon availability. Production would ingest on a schedule into a database. |
+| Error defined as forecast − actual | actual − forecast | Positive error then means a shortfall, which is the risk the buyer manages. |
+
 ## Architecture
 
 ```
