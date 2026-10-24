@@ -2,7 +2,7 @@
 
 Decision support for a UK utility buying power in the GB day-ahead market. Windcast shows the national wind generation forecast that was actually available when the purchase decision had to be made, and measures how accurate those forecasts were, so the team can size the volume it buys from other sources with the forecast error in mind.
 
-**Live app:** _add the Vercel URL here_
+**Live app:** : https://qzvtnm.vercel.app/
 
 ## What it does
 
